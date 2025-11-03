@@ -1,0 +1,10 @@
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.csproj.AssemblyReference.cache
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca_domowa.Properties.Resources.resources
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.csproj.GenerateResource.cache
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.csproj.CoreCompileInputs.cache
+C:\Users\Uczeń\source\repos\Praca domowa\bin\Debug\Praca domowa.exe.config
+C:\Users\Uczeń\source\repos\Praca domowa\bin\Debug\Praca domowa.exe
+C:\Users\Uczeń\source\repos\Praca domowa\bin\Debug\Praca domowa.pdb
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.exe
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.pdb
+C:\Users\Uczeń\source\repos\Praca domowa\obj\Debug\Praca domowa.exe.config
