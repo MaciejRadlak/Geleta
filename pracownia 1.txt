@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace Lab1_FileSystem
+{
+    // --- KLASA Z METODAMI ROZSZERZAJĄCYMI (ZADANIE 2) ---
+    public static class FileSystemExtensions
+    {
+        // Zadanie 2a: Metoda rozszerzająca dla System.IO.FileSystemInfo
+        // Zwraca sformatowany łańcuch atrybutów (np. RAHS)
+        public static string GetDosAttributes(this FileSystemInfo fsi)
+        {
+            StringBuilder sb = new StringBuilder();
+            
+            // Sprawdzamy poszczególne flagi bitowe
+            sb.Append((fsi.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly ? "R" : "-");
+            sb.Append((fsi.Attributes & FileAttributes.Archive) == FileAttributes.Archive ? "A" : "-");
+            sb.Append((fsi.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden ? "H" : "-");
+            sb.Append((fsi.Attributes & FileAttributes.System) == FileAttributes.System ? "S" : "-");
+
+            return sb.ToString();
+        }
+
+        // Zadanie 2b: Metoda rozszerzająca dla System.IO.DirectoryInfo
+        // Zwraca liczbę elementów w katalogu
+        public static int GetElementCount(this DirectoryInfo di)
+        {
+            try
+            {
+                // Zwraca sumę plików i podkatalogów
+                return di.GetFileSystemInfos().Length;
+            }
+            catch
+            {
+                // W przypadku braku dostępu zwracamy -1 lub 0
+                return -1;
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Zadanie 1: Obsługa znaków narodowych
+            Console.OutputEncoding = Encoding.UTF8;
+
+            // Sprawdzenie argumentów (ścieżka jest wymagana)
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Użycie: Program.exe <sciezka_katalogu> [sortowanie]");
+                Console.WriteLine("Opcje sortowania: name, date, size (dodaj '-' dla odwrotnego, np. -size)");
+                return;
+            }
+
+            string path = args[0];
+            string sortCriteria = args.Length > 1 ? args[1] : "name"; // Domyślne sortowanie po nazwie
+
+            if (!Directory.Exists(path))
+            {
+                Console.WriteLine("Podany katalog nie istnieje.");
+                return;
+            }
+
+            DirectoryInfo rootDir = new DirectoryInfo(path);
+            
+            Console.WriteLine($"Katalog główny: {rootDir.FullName}");
+            Console.WriteLine($"{"Atrybuty",-6} {"Rozmiar",-10} {"Data modyfikacji",-20} {"Nazwa"}");
+            Console.WriteLine(new string('-', 60));
+
+            // Rozpoczęcie rekurencyjnego wyświetlania
+            DisplayDirectory(rootDir, 0, sortCriteria);
+
+            // Zatrzymanie konsoli
+            Console.WriteLine("\nNaciśnij dowolny klawisz, aby zakończyć...");
+            Console.ReadKey();
+        }
+
+        // Zadanie 1 i 3: Rekurencyjne wyświetlanie z wcięciami i sortowaniem
+        static void DisplayDirectory(DirectoryInfo dir, int indentLevel, string sortCriteria)
+        {
+            try
+            {
+                // Pobranie wszystkich elementów (pliki i katalogi)
+                FileSystemInfo[] itemsArray = dir.GetFileSystemInfos();
+                
+                // Zadanie 3: Załadowanie do kolekcji sortującej (tutaj List<T>)
+                List<FileSystemInfo> items = new List<FileSystemInfo>(itemsArray);
+
+                // Logika sortowania
+                bool descending = sortCriteria.StartsWith("-");
+                string criteria = sortCriteria.TrimStart('-').ToLower();
+
+                Comparison<FileSystemInfo> comparison = null;
+
+                switch (criteria)
+                {
+                    case "date": // Zadanie 3c: wg daty
+                        comparison = (x, y) => x.LastWriteTime.CompareTo(y.LastWriteTime);
+                        break;
+                    case "size": // Zadanie 3b: wg rozmiaru (Length dla pliku, Count dla folderu)
+                        comparison = (x, y) => GetSize(x).CompareTo(GetSize(y));
+                        break;
+                    case "name": // Zadanie 3a: alfabetycznie
+                    default:
+                        comparison = (x, y) => x.Name.CompareTo(y.Name);
+                        break;
+                }
+
+                // Wykonanie sortowania
+                items.Sort(comparison);
+                if (descending) items.Reverse();
+
+                // Pętla wyświetlania
+                foreach (FileSystemInfo item in items)
+                {
+                    string indent = new string(' ', indentLevel * 4); // Wcięcie (4 spacje na poziom)
+                    string attributes = item.GetDosAttributes(); // Użycie metody rozszerzającej (Zad 2a)
+                    
+                    string sizeInfo;
+                    if (item is DirectoryInfo d)
+                    {
+                        int count = d.GetElementCount(); // Użycie metody rozszerzającej (Zad 2b)
+                        sizeInfo = $"[{count}]"; // Katalogi oznaczamy nawiasem i liczbą elementów
+                    }
+                    else
+                    {
+                        sizeInfo = ((FileInfo)item).Length.ToString();
+                    }
+
+                    // Formatowanie wiersza
+                    Console.WriteLine($"{attributes,-6} {sizeInfo,10} {item.LastWriteTime,-20} {indent}{item.Name}");
+
+                    // Rekurencja dla katalogów
+                    if (item is DirectoryInfo subDir)
+                    {
+                        DisplayDirectory(subDir, indentLevel + 1, sortCriteria);
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Pomijamy katalogi, do których nie mamy dostępu
+                Console.WriteLine(new string(' ', (indentLevel + 1) * 4) + "Brak dostępu!");
+            }
+        }
+
+        // Metoda pomocnicza do ujednolicenia "rozmiaru" dla sortowania
+        static long GetSize(FileSystemInfo item)
+        {
+            if (item is FileInfo f) return f.Length;
+            if (item is DirectoryInfo d) return d.GetElementCount();
+            return 0;
+        }
+    }
+}
